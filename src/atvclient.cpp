@@ -34,6 +34,7 @@
                               (dev->descriptor.idProduct == PRODUCT_APPLE_IR_1) || \
                               (dev->descriptor.idProduct == PRODUCT_APPLE_IR_2)))
 
+#define IS_PRODUCT_IR_0(dev)(dev->descriptor.idProduct == PRODUCT_APPLE_IR_0)
 #define LEDMODE_OFF		0
 #define LEDMODE_AMBER		1
 #define LEDMODE_AMBER_BLINK	2
@@ -134,6 +135,7 @@ int idle_mode = LEDMODE_WHITE;
 int button_mode = LEDMODE_OFF;
 int special_mode = LEDMODE_AMBER;
 int hold_mode = LEDMODE_AMBER;
+int endpoint = 0x82;
 
 /* from libusb usbi.h */
 struct usb_dev_handle {
@@ -273,7 +275,12 @@ static usb_dev_handle *find_ir(void)
 		for (dev = bus->devices; dev; dev = dev->next)
 			if (dev->descriptor.idVendor == VENDOR_APPLE)
 			    if(IS_APPLE_REMOTE(dev))
- 				return usb_open(dev);
+				{
+					if (IS_PRODUCT_IR_0(dev)){
+						endpoint = 0x83;
+						}
+ 					return usb_open(dev);
+				}
 	}
 
 	return NULL;
@@ -864,7 +871,7 @@ int main(int argc, char **argv) {
   set_led(idle_mode);
     
   while(1){
-    int result = usb_interrupt_read(get_ir(), 0x82, (char*) &command, sizeof(command), keydown ? BUTTON_TIMEOUT : 0);  
+    int result = usb_interrupt_read(get_ir(), endpoint, (char*) &command, sizeof(command), keydown ? BUTTON_TIMEOUT : 0);  
     if(result > 0) {
       // we have an IR code!
       unsigned long start = millis();
@@ -873,7 +880,7 @@ int main(int argc, char **argv) {
       if(command.flags == 0x26) {
         // set
         command.event = 0xee;
-      }
+      } 
 
       switch(command.event) {
         case 0xee:
