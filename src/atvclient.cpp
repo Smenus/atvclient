@@ -34,7 +34,7 @@
                               (dev->descriptor.idProduct == PRODUCT_APPLE_IR_1) || \
                               (dev->descriptor.idProduct == PRODUCT_APPLE_IR_2)))
 
-#define IS_PRODUCT_IR_0(dev)(dev->descriptor.idProduct == PRODUCT_APPLE_IR_0)
+#define IS_PRODUCT_IR_0(dev) (dev->descriptor.idProduct == PRODUCT_APPLE_IR_0)
 #define LEDMODE_OFF		0
 #define LEDMODE_AMBER		1
 #define LEDMODE_AMBER_BLINK	2
@@ -274,11 +274,9 @@ static usb_dev_handle *find_ir(void)
 	for (bus = usb_busses; bus; bus = bus->next) {
 		for (dev = bus->devices; dev; dev = dev->next)
 			if (dev->descriptor.idVendor == VENDOR_APPLE)
-			    if(IS_APPLE_REMOTE(dev))
-				{
-					if (IS_PRODUCT_IR_0(dev)){
+				if(IS_APPLE_REMOTE(dev)) {
+					if (IS_PRODUCT_IR_0(dev))
 						endpoint = 0x83;
-						}
  					return usb_open(dev);
 				}
 	}
@@ -880,7 +878,7 @@ int main(int argc, char **argv) {
       if(command.flags == 0x26) {
         // set
         command.event = 0xee;
-      } 
+      }
 
       switch(command.event) {
         case 0xee:
